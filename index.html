@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 문해력 방과후 수업 - 학습목표 대시보드</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', sans-serif;
+    background: linear-gradient(135deg, #e8eaf6 0%, #f3e5f5 100%);
+    min-height: 100vh; padding: 20px;
+  }
+
+  .header { text-align: center; margin-bottom: 20px; }
+  .header h1 { font-size: 22px; color: #1a237e; margin-bottom: 4px; }
+  .header .meta { font-size: 13px; color: #5c6bc0; }
+
+  .stats { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
+  .stat-box {
+    background: white; border-radius: 12px; padding: 12px 20px;
+    text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.08); min-width: 90px;
+  }
+  .stat-num { font-size: 24px; font-weight: 900; color: #3949ab; }
+  .stat-label { font-size: 11px; color: #78909c; margin-top: 2px; }
+
+  .bloom-legend {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px;
+  }
+  .bloom-tag {
+    padding: 4px 12px; border-radius: 14px; font-size: 12px;
+    font-weight: bold; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+
+  .filter-row {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 18px;
+  }
+  .filter-btn {
+    padding: 6px 16px; border-radius: 20px; border: 2px solid #c5cae9;
+    background: white; color: #3949ab; cursor: pointer; font-size: 13px;
+    font-weight: bold; transition: all 0.2s; font-family: inherit;
+  }
+  .filter-btn.active, .filter-btn:hover {
+    background: #3949ab; color: white; border-color: #3949ab;
+  }
+
+  .cards-grid { display: flex; flex-direction: column; gap: 12px; max-width: 800px; margin: 0 auto; }
+
+  .card {
+    background: white; border-radius: 14px; padding: 16px 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07); border-left: 6px solid #c5cae9;
+    cursor: pointer; transition: all 0.25s;
+  }
+  .card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.13); transform: translateY(-2px); }
+  .card.expanded { background: #fafbff; }
+
+  .card-header { display: flex; align-items: center; gap: 10px; }
+  .session-num {
+    background: #3949ab; color: white; border-radius: 10px;
+    padding: 5px 11px; font-size: 13px; font-weight: bold; white-space: nowrap;
+  }
+  .card-title { font-size: 15px; font-weight: bold; color: #1a237e; flex: 1; }
+  .bloom-badge {
+    padding: 3px 10px; border-radius: 12px; font-size: 11px;
+    font-weight: bold; color: white; white-space: nowrap;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+  .arrow {
+    color: #90a4ae; font-size: 14px;
+    transition: transform 0.25s; display: inline-block;
+  }
+  .card.expanded .arrow { transform: rotate(90deg); }
+
+  .card-body {
+    display: none; margin-top: 14px; padding-top: 14px;
+    border-top: 1px dashed #e8eaf6; animation: fadeIn 0.25s ease;
+  }
+  .card.expanded .card-body { display: block; }
+
+  @keyframes fadeIn { from { opacity:0; transform: translateY(-4px); } to { opacity:1; transform: translateY(0); } }
+
+  .obj-section { margin-bottom: 12px; }
+  .obj-label {
+    font-size: 11px; font-weight: bold; color: #7986cb;
+    letter-spacing: 0.3px; margin-bottom: 7px; text-transform: uppercase;
+  }
+  .obj-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+  .obj-dot {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: bold; color: white; flex-shrink: 0; margin-top: 2px;
+  }
+  .obj-text { font-size: 13.5px; color: #37474f; line-height: 1.6; }
+
+  .keyword-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .keyword {
+    background: #e8eaf6; color: #3949ab; padding: 3px 10px;
+    border-radius: 12px; font-size: 11px; font-weight: bold;
+  }
+
+  .progress-section {
+    background: white; border-radius: 14px; padding: 16px 20px;
+    margin: 20px auto; max-width: 800px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  }
+  .progress-title { font-size: 14px; font-weight: bold; color: #3949ab; margin-bottom: 12px; }
+  .progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .progress-label { font-size: 12px; color: #546e7a; width: 80px; flex-shrink: 0; }
+  .progress-bar-bg {
+    flex: 1; height: 10px; background: #e8eaf6;
+    border-radius: 5px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; border-radius: 5px;
+    transition: width 1s ease;
+  }
+  .progress-count { font-size: 11px; color: #78909c; width: 36px; }
+
+  .tip-box {
+    background: #fff8e1; border-left: 4px solid #ffd54f;
+    border-radius: 10px; padding: 12px 14px; margin: 16px auto;
+    max-width: 800px; font-size: 13px; color: #5d4037; line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🤖 AI 문해력 방과후 수업 | 차시별 학습목표</h1>
+  <div class="meta">강서중학교 · 중학교 1~3학년 혼합 7명 · 총 10차시 (45분/차시)</div>
+</div>
+
+<div class="stats">
+  <div class="stat-box"><div class="stat-num">10</div><div class="stat-label">총 차시</div></div>
+  <div class="stat-box"><div class="stat-num">45분</div><div class="stat-label">차시당 시간</div></div>
+  <div class="stat-box"><div class="stat-num">7명</div><div class="stat-label">학생 수</div></div>
+  <div class="stat-box"><div class="stat-num">3가지</div><div class="stat-label">핵심역량</div></div>
+</div>
+
+<div class="bloom-legend">
+  <span class="bloom-tag" style="background:#43a047">🌱 기억·이해 (1~2차시)</span>
+  <span class="bloom-tag" style="background:#fb8c00">⚙️ 적용 (3~5차시)</span>
+  <span class="bloom-tag" style="background:#e53935">🔍 분석 (6~7차시)</span>
+  <span class="bloom-tag" style="background:#8e24aa">🧠 평가·창조 (8~10차시)</span>
+</div>
+
+<div class="filter-row">
+  <button class="filter-btn active" onclick="filterCards('all', this)">📋 전체 보기</button>
+  <button class="filter-btn" onclick="filterCards('understand', this)">🌱 기억·이해</button>
+  <button class="filter-btn" onclick="filterCards('apply', this)">⚙️ 적용</button>
+  <button class="filter-btn" onclick="filterCards('analyze', this)">🔍 분석</button>
+  <button class="filter-btn" onclick="filterCards('evaluate', this)">🧠 평가·창조</button>
+</div>
+
+<div class="cards-grid" id="cardsGrid"></div>
+
+<div class="progress-section">
+  <div class="progress-title">📊 Bloom의 분류학 기반 인지 수준 분포</div>
+  <div class="progress-row">
+    <div class="progress-label" style="color:#43a047">🌱 기억·이해</div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:20%; background:#43a047;"></div></div>
+    <div class="progress-count">2차시</div>
+  </div>
+  <div class="progress-row">
+    <div class="progress-label" style="color:#fb8c00">⚙️ 적용</div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:30%; background:#fb8c00;"></div></div>
+    <div class="progress-count">3차시</div>
+  </div>
+  <div class="progress-row">
+    <div class="progress-label" style="color:#e53935">🔍 분석</div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:20%; background:#e53935;"></div></div>
+    <div class="progress-count">2차시</div>
+  </div>
+  <div class="progress-row">
+    <div class="progress-label" style="color:#8e24aa">🧠 평가·창조</div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:30%; background:#8e24aa;"></div></div>
+    <div class="progress-count">3차시</div>
+  </div>
+</div>
+
+<div class="tip-box">
+  💡 <strong>활용 팁:</strong> 각 차시 카드를 클릭하면 지식·기능·태도 목표가 펼쳐집니다. 상단 필터 버튼으로 Bloom 수준별로 목표를 확인할 수 있습니다. 매 차시 [과학독서×AI] 루틴이 병행됨에 유의하세요.
+</div>
+
+<script>
+const sessions = [
+  {
+    num: 1, title: "오리엔테이션 & AI 둘러보기",
+    bloom: "understand", bloomLabel: "기억·이해", bloomColor: "#43a047",
+    border: "#43a047",
+    knowledge: [
+      "AI 문해력 수업의 목표와 10차시 진행 방식을 설명할 수 있다.",
+      "일상생활 속에서 AI가 활용되는 사례를 3가지 이상 찾아 말할 수 있다."
+    ],
+    skill: [
+      "관심 있는 과학 분야를 정하고 읽을 책 1권을 선정하며 그 이유를 표현할 수 있다.",
+      "브레인스토밍을 통해 AI 사례를 모둠원과 공유하고 발표할 수 있다."
+    ],
+    attitude: [
+      "수업에 대한 기대와 목표를 나누며 학습 동기를 형성한다.",
+      "AI 기술에 대한 호기심과 탐구 의지를 갖는다."
+    ],
+    keywords: ["AI 문해력", "과학독서", "브레인스토밍", "오리엔테이션"]
+  },
+  {
+    num: 2, title: "생성형 AI 첫 만남",
+    bloom: "understand", bloomLabel: "기억·이해", bloomColor: "#43a047",
+    border: "#43a047",
+    knowledge: [
+      "생성형 AI(챗봇)가 학습 데이터를 바탕으로 텍스트를 예측·생성하는 원리를 쉬운 말로 설명할 수 있다."
+    ],
+    skill: [
+      "챗봇에 자유 주제로 질문하고 답변의 특성을 관찰·기록할 수 있다.",
+      "책 내용 중 궁금한 점 1가지를 AI에게 질문해 답변을 얻을 수 있다.",
+      "독서기록장에 '오늘 읽은 내용 + AI 답변에서 알게 된 점'을 한 단락으로 쓸 수 있다."
+    ],
+    attitude: [
+      "AI 답변을 맹목적으로 수용하지 않고 호기심을 갖고 관찰하는 태도를 지닌다.",
+      "짝과 독서기록을 교환하며 상호 피드백에 성실히 참여한다."
+    ],
+    keywords: ["생성형 AI", "챗봇", "독서기록장", "짝 피드백"]
+  },
+  {
+    num: 3, title: "좋은 질문이 좋은 답을 만든다",
+    bloom: "apply", bloomLabel: "적용", bloomColor: "#fb8c00",
+    border: "#fb8c00",
+    knowledge: [
+      "프롬프트의 구성요소(역할·맥락·지시·형식)를 열거하고 각 요소의 역할을 설명할 수 있다.",
+      "모호한 질문과 구체적인 질문의 결과 차이가 나타나는 이유를 이해할 수 있다."
+    ],
+    skill: [
+      "같은 주제에 대해 모호한 질문과 구체적인 질문을 각각 작성하고 결과를 비교할 수 있다.",
+      "책 관련 궁금증을 프롬프트 구성요소를 적용해 구체적으로 재구성할 수 있다.",
+      "좋은 프롬프트 체크리스트를 함께 정리할 수 있다."
+    ],
+    attitude: [
+      "짝의 질문을 함께 다듬는 과정에서 협력적 소통을 실천한다."
+    ],
+    keywords: ["프롬프트", "구체적 질문", "비교 실습", "체크리스트"]
+  },
+  {
+    num: 4, title: "프롬프트 엔지니어링 심화",
+    bloom: "apply", bloomLabel: "적용", bloomColor: "#fb8c00",
+    border: "#fb8c00",
+    knowledge: [
+      "역할 부여(Role prompting)·단계별 지시(Chain-of-thought) 등 심화 프롬프트 기법의 원리를 이해할 수 있다."
+    ],
+    skill: [
+      "역할부여 기법을 활용해 책 내용을 더 깊이 탐구하는 질문을 만들고 답변을 비교할 수 있다.",
+      "9~10차시 개인/모둠 프로젝트 주제를 자신의 책 주제와 연계해 선정하고 간략한 계획을 세울 수 있다."
+    ],
+    attitude: [
+      "자신의 관심사와 책 주제를 연계하여 자기주도적으로 탐구 방향을 설정한다."
+    ],
+    keywords: ["역할 부여", "단계별 지시", "심화 프롬프트", "프로젝트 주제 선정"]
+  },
+  {
+    num: 5, title: "이미지 생성 AI 체험하기",
+    bloom: "apply", bloomLabel: "적용", bloomColor: "#fb8c00",
+    border: "#fb8c00",
+    knowledge: [
+      "텍스트 프롬프트로 이미지를 생성하는 AI의 기본 원리를 설명할 수 있다."
+    ],
+    skill: [
+      "이미지 생성 AI로 원하는 그림을 만들고 프롬프트를 수정·개선하는 과정을 경험할 수 있다.",
+      "책 속 개념이나 장면을 설명하는 프롬프트를 작성해 이미지로 표현할 수 있다."
+    ],
+    attitude: [
+      "AI 생성 이미지의 저작권·창작 윤리에 대해 자신의 생각을 논리적으로 말할 수 있다.",
+      "기술 활용과 윤리적 책임이 함께 가야 함을 인식한다."
+    ],
+    keywords: ["이미지 생성 AI", "시각화", "저작권", "창작 윤리"]
+  },
+  {
+    num: 6, title: "AI도 틀릴 수 있다 — 환각과 팩트체크",
+    bloom: "analyze", bloomLabel: "분석", bloomColor: "#e53935",
+    border: "#e53935",
+    knowledge: [
+      "AI 환각(Hallucination) 현상의 개념과 왜 발생하는지를 설명할 수 있다.",
+      "팩트체크의 필요성과 방법을 이해할 수 있다."
+    ],
+    skill: [
+      "AI가 존재하지 않는 정보를 생성하는 환각 사례를 직접 실험하고 분석할 수 있다.",
+      "그동안 AI에게 받은 책 관련 답변 1가지를 책 내용과 비교해 팩트체크할 수 있다.",
+      "검증 결과(맞음/틀림/부분 오류)를 근거와 함께 독서기록장에 정리할 수 있다."
+    ],
+    attitude: [
+      "AI 정보를 무조건 신뢰하지 않고 항상 교차 확인하는 비판적 수용 태도를 갖는다.",
+      "'AI 답변은 항상 확인한다'는 AI 사용 원칙을 스스로 내면화한다."
+    ],
+    keywords: ["환각(Hallucination)", "팩트체크", "비판적 사고", "AI 사용 원칙"]
+  },
+  {
+    num: 7, title: "데이터와 AI 편향",
+    bloom: "analyze", bloomLabel: "분석", bloomColor: "#e53935",
+    border: "#e53935",
+    knowledge: [
+      "AI 학습 데이터의 편향이 차별·오류 등의 사회적 문제로 이어질 수 있음을 설명할 수 있다."
+    ],
+    skill: [
+      "이미지 검색·채용 AI 등 실제 편향 사례의 원인과 문제점을 분석하고 토론할 수 있다.",
+      "자신의 책 주제와 관련해 AI가 편향된 답을 줄 수 있는 상황을 예시로 들어 질문하고 결과를 확인할 수 있다.",
+      "분석한 내용을 독서기록장에 정리하고 모둠에 발표할 수 있다."
+    ],
+    attitude: [
+      "다양한 관점과 다양한 데이터의 중요성을 인식하며 포용적·비판적 사고를 실천한다."
+    ],
+    keywords: ["데이터 편향", "공정성", "모둠 토론", "사례 분석"]
+  },
+  {
+    num: 8, title: "AI 윤리와 우리의 약속",
+    bloom: "evaluate", bloomLabel: "평가·창조", bloomColor: "#8e24aa",
+    border: "#8e24aa",
+    knowledge: [
+      "AI 활용의 주요 윤리 쟁점(개인정보·저작권·가짜뉴스·과의존)을 설명할 수 있다."
+    ],
+    skill: [
+      "모둠별로 다른 윤리 쟁점 케이스를 분석하고 해결 방안을 제안할 수 있다.",
+      "'우리 반 AI 사용 가이드라인' 초안을 작성하고 전체 합의를 통해 확정할 수 있다.",
+      "책 읽으며 AI를 활용할 때 지켜야 할 약속 1가지를 가이드라인에 제안할 수 있다."
+    ],
+    attitude: [
+      "책임 있는 AI 사용자로서 공동체 규범 제정에 주체적으로 참여한다.",
+      "디지털 시민으로서 AI 윤리의 중요성을 인식한다."
+    ],
+    keywords: ["AI 윤리", "가이드라인 제정", "개인정보", "저작권", "과의존"]
+  },
+  {
+    num: 9, title: "우리들의 AI 프로젝트 제작",
+    bloom: "evaluate", bloomLabel: "평가·창조", bloomColor: "#8e24aa",
+    border: "#8e24aa",
+    knowledge: [
+      "배운 AI 스킬(프롬프트·이미지 생성·팩트체크·윤리 적용)을 종합적으로 프로젝트에 활용할 수 있다."
+    ],
+    skill: [
+      "개인/모둠 프로젝트 결과물(AI 활용 보고서·그림책·소개자료 등)을 완성할 수 있다.",
+      "9차시까지 쓴 독서기록장을 모아 가장 인상 깊은 'AI 질문과 답' 1가지를 선택하고 독후감 형태로 정리할 수 있다.",
+      "발표 순서를 정하고 짝 피드백을 주고받을 수 있다."
+    ],
+    attitude: [
+      "자신의 학습 성장 과정을 스스로 돌아보고 발표 준비에 성실히 임한다."
+    ],
+    keywords: ["프로젝트 제작", "AI 통합 적용", "독후감", "포트폴리오"]
+  },
+  {
+    num: 10, title: "발표회 & 마무리",
+    bloom: "evaluate", bloomLabel: "평가·창조", bloomColor: "#8e24aa",
+    border: "#8e24aa",
+    knowledge: [
+      "10차시 동안 배운 AI 문해력 핵심 개념(프롬프트·환각·편향·윤리)을 자신의 말로 정리할 수 있다."
+    ],
+    skill: [
+      "개인/모둠 프로젝트와 완성된 독후감을 청중 앞에서 발표할 수 있다.",
+      "발표를 들으며 칭찬 1가지, 질문 1가지의 상호 피드백을 작성해 제공할 수 있다."
+    ],
+    attitude: [
+      "'AI 문해력을 기르며 달라진 나의 생각'을 진솔하게 나누며 수업 전체를 회고한다.",
+      "앞으로 AI를 책임감 있게 활용하겠다는 다짐을 갖는다."
+    ],
+    keywords: ["프로젝트 발표", "상호 피드백", "회고", "수료", "AI 시민"]
+  }
+];
+
+function filterCards(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.card').forEach(card => {
+    card.style.display = (type === 'all' || card.dataset.bloom === type) ? '' : 'none';
+  });
+}
+
+function toggleCard(card) {
+  card.classList.toggle('expanded');
+}
+
+function buildCards() {
+  const grid = document.getElementById('cardsGrid');
+  sessions.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.bloom = s.bloom;
+    card.style.borderLeftColor = s.border;
+    card.onclick = () => toggleCard(card);
+
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="session-num">${s.num}차시</div>
+        <div class="card-title">${s.title}</div>
+        <span class="bloom-badge" style="background:${s.bloomColor}">${s.bloomLabel}</span>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="obj-section">
+          <div class="obj-label">📘 지식·이해 목표</div>
+          ${s.knowledge.map(t => `
+            <div class="obj-item">
+              <div class="obj-dot" style="background:${s.bloomColor}">지</div>
+              <div class="obj-text">${t}</div>
+            </div>`).join('')}
+        </div>
+        <div class="obj-section">
+          <div class="obj-label">🛠️ 기능·수행 목표</div>
+          ${s.skill.map(t => `
+            <div class="obj-item">
+              <div class="obj-dot" style="background:#1e88e5">기</div>
+              <div class="obj-text">${t}</div>
+            </div>`).join('')}
+        </div>
+        <div class="obj-section">
+          <div class="obj-label">💬 태도·가치 목표</div>
+          ${s.attitude.map(t => `
+            <div class="obj-item">
+              <div class="obj-dot" style="background:#00897b">태</div>
+              <div class="obj-text">${t}</div>
+            </div>`).join('')}
+        </div>
+        <div class="keyword-row">
+          ${s.keywords.map(k => `<span class="keyword">#${k}</span>`).join('')}
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+buildCards();
+</script>
+</body>
+</html>
